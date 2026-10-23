@@ -22,7 +22,7 @@ records += [
     dict(records[0], id='Qwen/Announcement', siblings=[{'rfilename': 'README.md'}]),
     dict(records[0], id='Qwen/Adapter', siblings=[{'rfilename': 'adapter_model.safetensors'}]),
     dict(records[0], id='Qwen/Private', private=True),
-    dict(records[0], id='Qwen/Image', pipeline_tag='text-to-image'),
+    dict(records[0], id='Qwen/Embeddings', pipeline_tag='feature-extraction'),
 ]
 # External strings must remain inert in both HTML and the embedded script.
 records[2]['id'] = 'Qwen/<script>alert(1)</script>'
@@ -53,20 +53,43 @@ def fake_http(url):
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)
     shutil.copy(build.ROOT / 'template.html', root / 'template.html')
+    shutil.copy(build.ROOT / 'focus.json', root / 'focus.json')
     sources = [{'label': 'Fixture evidence', 'url': 'https://example.com/rumor', 'date': now.date().isoformat()}]
     seeds = [
         {'name': 'Qwen Test-Model-1', 'author': 'Qwen', 'match': '^Test-Model-1$', 'status': 'Speculation', 'conf': 'lo', 'what': 'A sourced rumor', 'when': 'Unknown', 'sources': sources},
         {'name': 'Qwen 4', 'author': 'Qwen', 'match': r'^Qwen[ _-]*4(?![.\d])', 'status': 'In training', 'conf': 'md', 'what': 'Training reported', 'when': 'Unknown', 'sources': sources},
     ]
     (root / 'rumors.json').write_text(json.dumps({'reviewed': now.date().isoformat(), 'items': seeds}))
+    (root / 'state.json').write_text(json.dumps({'updated': (now - dt.timedelta(days=1)).isoformat(),
+                                              'ranks': {'Qwen/Test-Model-0': 99}}))
     with patch.object(build, 'ROOT', root), patch.object(build, 'http', fake_http):
         vetted = build.collect_release_catalog(now)
+        # Broader discovery still requires actual weights, not just a task tag.
+        for task in ('image-to-video', 'text-to-speech', 'robotics'):
+            assert build.normalize(dict(records[0], pipeline_tag=task))['task'] == task
+            assert build.normalize(dict(records[0], pipeline_tag=task, siblings=[])) is None
+        assert build.normalize(dict(records[0], pipeline_tag='text-to-image', tags=['lora'])) is None
+        assert build.normalize(dict(records[0], library_name='peft')) is None
+        focused = [build.normalize(dict(records[0], id='thinkingmachines/Inkling', pipeline_tag='image-text-to-text')),
+                   build.normalize(dict(records[0], id='reflection/Beam-1.0-501B-A23B')),
+                   build.normalize(dict(records[0], id='nvidia/Cosmos3-H-Dreams', pipeline_tag='image-to-video')),
+                   build.normalize(dict(records[0], id='Community/Kimi-K3.1'))]
+        comparison = build.model_watch(focused, dict(vetted, coreweave=['Reflection Beam 1.0', 'NVIDIA Nemotron 3.5 Ultra']))
+        inkling = next(i for i in comparison['items'] if i['name'] == 'Inkling')
+        assert inkling['weights'] and inkling['total_b'] == 975 and inkling['active_b'] == 41
+        assert next(i for i in comparison['items'] if i['name'] == 'Beam 1.0')['coreweave']
+        assert not next(i for i in comparison['items'] if i['name'] == 'Nemotron 3 Ultra')['coreweave']
+        kimi_focus = next(i for i in comparison['items'] if i['name'] == 'Kimi K3.1 Pro')
+        assert kimi_focus['released'] == build.KIMI_RELEASES and not kimi_focus['weights']
+        assert next(i for i in comparison['items'] if i['kind'] == 'physical' and i['weights'])
         build.main()
         page = (root / 'site/index.html').read_text()
         assert '/*__DATA__*/null' not in page
         payload = page.split('const DATA = ', 1)[1].split(';\nif (window.Chart)', 1)[0]
         data = json.loads(payload)
         assert data['model_count'] == 20 and len(data['top']) == 15
+        assert len(data['focus']['items']) == 7 and 'data-focus-filter="physical"' in page
+        assert data['previous'] is None, 'A changed source sample must start a new rank baseline'
         assert len(data['releases']) == 20 and len(data['watch']['items']) == 1
         assert data['watch']['items'][0]['name'] == 'Qwen 4'
         assert page.index('id="rumored-models"') < page.index('The quick read')

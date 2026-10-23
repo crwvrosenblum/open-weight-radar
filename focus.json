@@ -1,0 +1,97 @@
+{
+  "reviewed": "2026-10-23",
+  "items": [
+    {
+      "name": "Inkling",
+      "lab": "Thinking Machines",
+      "author": "thinkingmachines",
+      "search": "Inkling",
+      "match": "^Inkling(?:$|[ _-](?:NVFP4|FP8|BF16)$)",
+      "total_b": 975,
+      "active_b": 41,
+      "inputs": "Text, image, audio",
+      "outputs": "Text",
+      "kind": "multimodal",
+      "source": "https://thinkingmachines.ai/inkling/"
+    },
+    {
+      "name": "Inkling-Small",
+      "lab": "Thinking Machines",
+      "author": "thinkingmachines",
+      "search": "Inkling-Small",
+      "match": "^Inkling[ _-]Small(?:$|[ _-](?:NVFP4|FP8|BF16)$)",
+      "total_b": 276,
+      "active_b": 12,
+      "inputs": "Text, image, audio",
+      "outputs": "Text",
+      "kind": "multimodal",
+      "source": "https://thinkingmachines.ai/inkling/"
+    },
+    {
+      "name": "Beam 1.0",
+      "lab": "Reflection",
+      "author": "reflection",
+      "search": "Beam-1.0-501B-A23B",
+      "match": "\\bbeam[ _-]*1[.]0(?![.\\d])(?!.*DFlash)",
+      "total_b": 501,
+      "active_b": 23,
+      "inputs": "Text",
+      "outputs": "Text",
+      "kind": "text",
+      "source": "https://reflection.ai/blog/beam-is-available"
+    },
+    {
+      "name": "Nemotron 3 Ultra",
+      "lab": "NVIDIA",
+      "author": "nvidia",
+      "search": "Nemotron-3-Ultra-550B-A55B",
+      "match": "\\bnemotron[ _-]*3[ _-]*ultra\\b",
+      "total_b": 550,
+      "active_b": 55,
+      "inputs": "Text",
+      "outputs": "Text",
+      "kind": "text",
+      "source": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16"
+    },
+    {
+      "name": "Cosmos3-Super-Image2Video",
+      "lab": "NVIDIA",
+      "author": "nvidia",
+      "search": "Cosmos3-Super-Image2Video",
+      "match": "^Cosmos3[ _-]Super[ _-]Image2Video(?:$|[ _-])",
+      "total_b": 64,
+      "active_b": null,
+      "inputs": "Image, text",
+      "outputs": "Video",
+      "kind": "physical",
+      "source": "https://huggingface.co/nvidia/Cosmos3-Super-Image2Video"
+    },
+    {
+      "name": "Cosmos3-H-Dreams",
+      "lab": "NVIDIA",
+      "author": "nvidia",
+      "search": "Cosmos3-H-Dreams",
+      "match": "^Cosmos3[ _-]H[ _-]Dreams$",
+      "total_b": null,
+      "active_b": null,
+      "inputs": "Image, robot commands",
+      "outputs": "Video",
+      "kind": "physical",
+      "source": "https://huggingface.co/nvidia/Cosmos3-H-Dreams"
+    },
+    {
+      "name": "Kimi K3.1 Pro",
+      "lab": "Moonshot",
+      "author": "moonshotai",
+      "search": "Kimi-K3.1",
+      "match": "\\bkimi[ _-]*k3[.]1(?![.\\d])",
+      "total_b": 3000,
+      "size_note": "class",
+      "active_b": null,
+      "inputs": "Not reviewed",
+      "outputs": "Not reviewed",
+      "kind": "text",
+      "source": "https://www.kimi.com/code/docs/en/kimi-code/whats-new.html"
+    }
+  ]
+}

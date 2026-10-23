@@ -19,6 +19,11 @@ def verify(page):
     assert page.count('data-release') == len(data['releases'])
     assert page.count('data-rumor') == len(data['watch']['items'])
     assert page.index('id="rumored-models"') < page.index('The quick read')
+    assert page.count('data-focus data-large=') == len(data['focus']['items'])
+    assert data['focus']['checked'] == data['watch']['vetted']
+    for item in data['focus']['items']:
+        assert item['source'].startswith('https://')
+        assert all(model['author'].casefold() == item['author'].casefold() for model in item['weights'])
     for item in data['watch']['items']:
         assert item['name'] and item['sources']
         assert all(source['url'].startswith(('http://', 'https://')) for source in item['sources'])

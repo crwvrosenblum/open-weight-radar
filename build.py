@@ -1,4 +1,4 @@
-"""Build the key-free radar from public Hugging Face metadata and news RSS."""
+"""Build the key-free radar from public model metadata and news RSS."""
 import datetime as dt
 import html
 import json
@@ -11,11 +11,14 @@ from email.utils import parsedate_to_datetime
 
 ROOT = Path(__file__).resolve().parent
 UTC = dt.timezone.utc
+SAMPLE_VERSION = 2
 LABS = {
     'Mistral': 'mistralai', 'Qwen / Alibaba': 'Qwen', 'DeepSeek': 'deepseek-ai',
     'Moonshot Kimi': 'moonshotai', 'MiniMax': 'MiniMaxAI', 'Z.ai GLM': 'zai-org',
-    'Meta Llama': 'meta-llama', 'Google Gemma': 'google', 'NVIDIA Nemotron': 'nvidia',
+    'Meta Llama': 'meta-llama', 'Google Gemma': 'google', 'NVIDIA': 'nvidia',
     'OpenAI gpt-oss': 'openai', 'Reflection': 'reflection',
+    'Thinking Machines': 'thinkingmachines', 'Ai2': 'allenai', 'Cohere Labs': 'CohereLabs',
+    'IBM Granite': 'ibm-granite', 'Liquid AI': 'LiquidAI', 'Black Forest Labs': 'black-forest-labs',
 }
 MODEL_NAMES = {
     'mistralai': r'\bmistral[ -]+large[ -]+\d+(?:\.\d+)?',
@@ -26,11 +29,21 @@ MODEL_NAMES = {
     'zai-org': r'\bglm[ -]*\d+(?:\.\d+)?(?:[ -]+flash)?',
     'meta-llama': r'\bllama[ -]*\d+(?:\.\d+)?',
     'google': r'\bgemma[ -]*\d+(?:\.\d+)?',
-    'nvidia': r'\bnemotron[ -]*\d+(?:\.\d+)?',
+    'nvidia': r'\b(?:nemotron[ -]*\d+(?:\.\d+)?(?:[ -]+(?:ultra|super|nano|lightning))?|cosmos[ -]*\d+(?:\.\d+)?(?:[ -]+(?:super|nano|edge))?)',
     'openai': r'\bgpt[ -]*oss[ -]*\d+',
+    'reflection': r'\bbeam[ -]*\d+(?:\.\d+)?',
+    'thinkingmachines': r'\binkling(?:[ -]+small)?(?:[ -]*\d+(?:\.\d+)?)?',
+    'allenai': r'\b(?:olmo|molmo)[ -]*\d+(?:\.\d+)?',
+    'CohereLabs': r'\bcommand[ -]+(?:a|r)(?:[ -]+\d+(?:\.\d+)?)?',
+    'ibm-granite': r'\bgranite[ -]*\d+(?:\.\d+)?',
+    'LiquidAI': r'\blfm[ -]*\d+(?:\.\d+)?',
+    'black-forest-labs': r'\bflux[ .-]*\d+(?:\.\d+)?',
 }
 UPCOMING = r'\b(?:rumou?r(?:s|ed)?|leak(?:s|ed)?|upcoming|in training|expected|spotted|teaser|prepar\w*|coming|planned|unreleased)\b'
-TASKS = {'text-generation', 'image-text-to-text', 'text2text-generation', 'any-to-any'}
+TRENDING_TASKS = ('text-generation', 'image-text-to-text', 'text-to-image', 'image-to-video',
+                  'text-to-video', 'text-to-speech', 'automatic-speech-recognition', 'robotics')
+TASKS = set(TRENDING_TASKS) | {'text2text-generation', 'any-to-any', 'video-text-to-text',
+                                'audio-text-to-text', 'audio-to-audio', 'video-to-video'}
 
 
 def http(url):
@@ -78,6 +91,8 @@ def normalize(record):
     if not model_id or record.get('private'):
         return None
     tags = record.get('tags') or []
+    if record.get('library_name') == 'peft' or {'peft', 'lora'} & set(tags):
+        return None
     task = record.get('pipeline_tag') or next((tag for tag in tags if tag in TASKS), None)
     files = [file.get('rfilename', '') for file in record.get('siblings', [])]
     weights = any(re.search(r'\.(safetensors|gguf|bin|pth|pt)$', f, re.I)
@@ -96,8 +111,11 @@ def normalize(record):
 def collect_models():
     models, trending_ids, failures = {}, set(), []
     queries = [('Trending: ' + task, {'pipeline_tag': task, 'sort': 'trendingScore', 'limit': 60})
-               for task in ('text-generation', 'image-text-to-text')]
+               for task in TRENDING_TASKS]
     queries += [(lab, {'author': author, 'sort': 'createdAt', 'limit': 60}) for lab, author in LABS.items()]
+    focus = json.loads((ROOT / 'focus.json').read_text())
+    queries += [('Watch: ' + item['name'], {'author': item['author'], 'search': item['search'], 'limit': 60})
+                for item in focus['items']]
     for label, params in queries:
         params.update(direction=-1, full='true')
         try:
@@ -122,16 +140,24 @@ def collect_models():
     if failures:
         raise RuntimeError('Hugging Face sources unavailable: ' + ', '.join(failures))
     if not trending_ids:
-        raise RuntimeError('No public LLM repositories with weight files found')
+        raise RuntimeError('No public model repositories with weight files found')
     return list(models.values()), trending_ids
 
 
 def collect_news(now):
-    query = '(Mistral OR Qwen OR DeepSeek OR Kimi OR MiniMax OR GLM OR Llama OR Gemma OR Nemotron OR gpt-oss OR Reflection) (model OR weights) (rumor OR leak OR upcoming OR preview OR training OR teaser OR expected OR release) when:14d'
-    url = 'https://news.google.com/rss/search?' + urllib.parse.urlencode({'q': query, 'hl': 'en-US', 'gl': 'US', 'ceid': 'US:en'})
-    root = ET.fromstring(http(url))
+    # Separate queries keep the busiest labs from crowding out other releases.
+    groups = ('Qwen OR DeepSeek OR Kimi OR MiniMax OR GLM',
+              'Mistral OR Llama OR Gemma OR Nemotron OR gpt-oss OR Reflection OR Inkling OR OLMo OR Molmo OR Granite OR LiquidAI OR Cohere',
+              'Cosmos OR GR00T OR FLUX OR "world model" OR "video model" OR "speech model"')
+    reports = {}
+    for group in groups:
+        query = f'({group}) (model OR weights) (rumor OR leak OR upcoming OR preview OR training OR teaser OR expected OR release) when:14d'
+        url = 'https://news.google.com/rss/search?' + urllib.parse.urlencode({'q': query, 'hl': 'en-US', 'gl': 'US', 'ceid': 'US:en'})
+        root = ET.fromstring(http(url))
+        for item in root.findall('./channel/item'):
+            reports[item.findtext('link')] = item
     items = []
-    for item in root.findall('./channel/item'):
+    for item in reports.values():
         try:
             published = parsedate_to_datetime(item.findtext('pubDate')).astimezone(UTC)
         except (TypeError, ValueError):
@@ -175,6 +201,7 @@ def collect_release_catalog(now):
     names = re.findall(r'<h3\b[^>]*class="[^"]*\bmodels-grid-item-title\b[^"]*"[^>]*>(.*?)</h3>', page, re.S)
     if not names:
         raise ValueError('CoreWeave public catalog has no model headings')
+    public_names = [text_only(name) for name in names]
     for name in names:
         records.extend(release_names(text_only(name), COREWEAVE_CATALOG))
     checks.append({'name': 'CoreWeave public catalog', 'url': COREWEAVE_CATALOG, 'count': len(names)})
@@ -211,7 +238,23 @@ def collect_release_catalog(now):
     if not count:
         raise ValueError('Kimi changelog has no recognizable model releases')
     checks.append({'name': 'Kimi official product releases', 'url': KIMI_RELEASES, 'count': count})
-    return {'records': records, 'checks': checks, 'updated': now.isoformat()}
+    return {'records': records, 'checks': checks, 'updated': now.isoformat(), 'coreweave': public_names}
+
+
+def model_watch(models, release_catalog):
+    focus = json.loads((ROOT / 'focus.json').read_text())
+    items = []
+    for entry in focus['items']:
+        item = dict(entry)
+        matches = [model for model in models if model['author'].casefold() == item['author'].casefold()
+                   and re.search(item['match'], model['name'], re.I)]
+        item['weights'] = sorted(matches, key=lambda model: (-model['downloads'], model['id']))
+        item['coreweave'] = [name for name in release_catalog['coreweave'] if re.search(item['match'], name, re.I)]
+        item['released'] = next((record['url'] for record in release_catalog['records']
+                                 if record['author'].casefold() == item['author'].casefold()
+                                 and re.search(item['match'], record['name'], re.I)), None)
+        items.append(item)
+    return {'items': items, 'reviewed': focus['reviewed'], 'checked': release_catalog['updated']}
 
 
 def rumored_models(news, models, previous, now, release_catalog):
@@ -307,6 +350,22 @@ def render(data):
             f'<ul class="rumor-evidence">{sources}</ul>{latest_link}</div></details>'
             f'<div class="rumor-links" aria-label="Sources for {esc(item["name"])}">{source_links}</div></li>'
         )
+    focus_rows = []
+    for item in data['focus']['items']:
+        weights = item['weights']
+        total = number(item['total_b'] * 1e9) + ' ' + item.get('size_note', 'total') if item['total_b'] else 'Not reviewed'
+        active = number(item['active_b'] * 1e9) + ' active' if item['active_b'] else 'Active count not reviewed'
+        weight_status = link(weights[0]['url'], 'Weight files listed') if weights else 'No weights observed'
+        access = ' · gated' if weights and weights[0]['gated'] else ''
+        product = link(item['released'], 'Product / API live') if item['released'] else 'No product check matched'
+        catalog = link(COREWEAVE_CATALOG, 'Publicly listed') if item['coreweave'] else 'No public match'
+        focus_rows.append(
+            f'<tr data-focus data-large="{str(bool(item["total_b"] and item["total_b"] >= 100)).lower()}" data-kind="{esc(item["kind"])}">'
+            f'<td class="model">{link(item["source"], item["name"])}<small>{esc(item["lab"])}</small></td>'
+            f'<td class="nowrap">{esc(total)}<small>{esc(active)}</small></td>'
+            f'<td>{esc(item["inputs"])}<small>→ {esc(item["outputs"])}</small></td>'
+            f'<td>{weight_status}{access}<small>{product}</small></td><td>{catalog}</td></tr>'
+        )
     movers = ''.join(f'<tr><td>{index}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td class="numeric">{number(model["score"])}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td><td>{"↑ " + str(model["movement"]) if model["movement"] is not None and model["movement"] > 0 else "↓ " + str(-model["movement"]) if model["movement"] is not None and model["movement"] < 0 else "—" if model["movement"] == 0 or not data["previous"] else "New"}</td></tr>' for index, model in enumerate(top, 1))
     release_rows = ''.join(f'<tr data-release><td class="nowrap">{esc(model["created"][:10])}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td>{esc(model["task"])}</td><td>{esc(model["license"])}{" · gated" if model["gated"] else ""}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td></tr>' for model in releases)
     coverage = ', '.join(LABS)
@@ -320,8 +379,10 @@ def render(data):
         'VETTED': esc(data['watch']['vetted'].replace('T', ' ').replace('+00:00', ' UTC')),
         'WATCH_TIME': esc(data['watch'].get('updated') or 'unavailable'), 'WATCH_WARNING': warning,
         'TOP_ROWS': movers, 'RELEASE_ROWS': release_rows or '<tr><td colspan="6">No recent repositories in this snapshot.</td></tr>',
+        'FOCUS_ROWS': ''.join(focus_rows), 'FOCUS_COUNT': str(len(focus_rows)),
+        'FOCUS_REVIEWED': esc(data['focus']['reviewed']),
         'RELEASE_COUNT': str(len(releases)), 'COVERAGE': esc(coverage),
-        'PREVIOUS': esc(data['previous'] or 'First snapshot; rank movement starts after the next refresh.'),
+        'PREVIOUS': esc(data['previous'] or 'new coverage baseline; movement starts after the next refresh'),
         'LAB_LINKS': ' · '.join(link(hf_url(author), lab) for lab, author in LABS.items()),
     }
     template = (ROOT / 'template.html').read_text()
@@ -339,7 +400,8 @@ def main():
     previous = json.loads(state_file.read_text()) if state_file.exists() else {}
     models, trending_ids = collect_models()
     ranked = sorted((model for model in models if model['id'] in trending_ids), key=lambda model: (-model['score'], -model['likes'], model['id']))
-    prior_ranks = previous.get('ranks', {})
+    same_sample = previous.get('sample_version') == SAMPLE_VERSION
+    prior_ranks = previous.get('ranks', {}) if same_sample else {}
     for rank, model in enumerate(ranked, 1):
         model['movement'] = prior_ranks[model['id']] - rank if model['id'] in prior_ranks else None
     releases = sorted((model for model in models if stamp(model['created']) and now - dt.timedelta(days=30) <= stamp(model['created']) <= now), key=lambda model: model['created'], reverse=True)
@@ -356,11 +418,12 @@ def main():
         watch['updated'] = previous.get('watch', {}).get('updated')
         watch['warning'] = 'News refresh unavailable. Showing dated source evidence and previous reports; weight availability was checked in this build.'
     data = {'updated': now.isoformat(), 'model_count': len(models), 'top': ranked[:15], 'releases': releases,
-            'watch': watch, 'previous': previous.get('updated')}
+            'focus': model_watch(models, release_catalog),
+            'watch': watch, 'previous': previous.get('updated') if same_sample else None}
     site = ROOT / 'site'
     site.mkdir(exist_ok=True)
     (site / 'index.html').write_text(render(data))
-    state_file.write_text(json.dumps({'updated': now.isoformat(), 'ranks': {model['id']: rank for rank, model in enumerate(ranked, 1)}, 'watch': watch}, indent=2, ensure_ascii=False) + '\n')
+    state_file.write_text(json.dumps({'updated': now.isoformat(), 'sample_version': SAMPLE_VERSION, 'ranks': {model['id']: rank for rank, model in enumerate(ranked, 1)}, 'watch': watch}, indent=2, ensure_ascii=False) + '\n')
     print(f"Built {data['updated']}: {len(models)} repositories, {len(releases)} recent, {len(watch['items'])} rumored/upcoming models; no paid APIs")
 
 
