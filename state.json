@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-23T20:56:23+00:00",
+  "updated": "2026-10-23T20:57:04+00:00",
   "sample_version": 2,
   "ranks": {
     "deepseek-ai/DeepSeek-V4.1-Flash-1017": 1,
@@ -116,10 +116,10 @@
     "inclusionAI/Ling-3.1-flash": 112,
     "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16": 113,
     "ornith-ai/Ornith-1.5-122B-GGUF": 114,
-    "google/gemma-4-31B-it": 115,
-    "DavidAU/Qwen3.8-27B-Jumbo-Fusion-IQ-747-900-Turbo-Brilliance-50X-Reasoning-Instruct-NEO-MAX-MTP-GGUF": 116,
-    "AuroraAI-Research/AuroraASR-1M": 117,
-    "agentionai/Qwen3.8-Flash-Next-Gyro-Coder-GGUF": 118,
+    "agentionai/Qwen3.8-Flash-Next-Gyro-Coder-GGUF": 115,
+    "google/gemma-4-31B-it": 116,
+    "DavidAU/Qwen3.8-27B-Jumbo-Fusion-IQ-747-900-Turbo-Brilliance-50X-Reasoning-Instruct-NEO-MAX-MTP-GGUF": 117,
+    "AuroraAI-Research/AuroraASR-1M": 118,
     "Cloudflare/clef-flash": 119,
     "audnai/penclaw-GLM-5.3-abliterated": 120,
     "HauhauCS/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive": 121,
@@ -415,7 +415,7 @@
     "lerobot/g05_base": 411
   },
   "watch": {
-    "updated": "2026-10-23T20:56:23+00:00",
+    "updated": "2026-10-23T20:57:04+00:00",
     "reviewed": "2026-10-23",
     "items": [
       {
@@ -565,7 +565,7 @@
     "released": {
       "kimik3.1": {
         "url": "https://models.dev/api.json",
-        "checked": "2026-10-23T20:56:23+00:00"
+        "checked": "2026-10-23T20:57:04+00:00"
       }
     },
     "release_checks": [
@@ -585,6 +585,6 @@
         "count": 4
       }
     ],
-    "vetted": "2026-10-23T20:56:23+00:00"
+    "vetted": "2026-10-23T20:57:04+00:00"
   }
 }
