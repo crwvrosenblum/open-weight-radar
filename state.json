@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-23T17:11:54+00:00",
+  "updated": "2026-10-23T17:13:00+00:00",
   "ranks": {
     "deepseek-ai/DeepSeek-V4.1-Flash-1017": 1,
     "RecursiveSI/flint": 2,
@@ -89,9 +89,9 @@
     "huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF": 86,
     "fastino/GLiDE": 87,
     "HauhauCS/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive": 88,
-    "Qwen/Qwen3.5-9B": 89,
-    "XiaomiMiMo/MiMo-V2.6-Pro-RL": 90,
-    "AlexWortega/Qwen3.8-27B-antislop": 91,
+    "AlexWortega/Qwen3.8-27B-antislop": 89,
+    "Qwen/Qwen3.5-9B": 90,
+    "XiaomiMiMo/MiMo-V2.6-Pro-RL": 91,
     "agentionai/Qwen3.8-Flash-Next-Gyro-Coder-GGUF": 92,
     "nvidia/Flora-Captioner": 93,
     "ornith-ai/Ornith-1.5-9B-GGUF": 94,
@@ -122,7 +122,7 @@
     "tencent/Hy-Memory-30B-A3B-GGUF": 119
   },
   "watch": {
-    "updated": "2026-10-23T17:11:54+00:00",
+    "updated": "2026-10-23T17:13:00+00:00",
     "items": [
       {
         "title": "The License Countdown: Mistral Large 4 and the $20M Question",
