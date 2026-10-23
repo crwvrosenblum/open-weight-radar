@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-23T18:52:46+00:00",
+  "updated": "2026-10-23T19:01:22+00:00",
   "ranks": {
     "deepseek-ai/DeepSeek-V4.1-Flash-1017": 1,
     "RecursiveSI/flint": 2,
@@ -11,13 +11,13 @@
     "MiniMaxAI/MiniMax-M3.1-Flash": 8,
     "meta-models/Muse-Spark-Open-816B-A42B": 9,
     "orcarouter/OrcaCyber-Nano-1.0": 10,
-    "tencent/Hy-Memory-30B-A3B": 11,
-    "nvidia/Qwen3.8-Flash-Next-FP4-Local": 12,
+    "nvidia/Qwen3.8-Flash-Next-FP4-Local": 11,
+    "tencent/Hy-Memory-30B-A3B": 12,
     "unsloth/flint-GGUF": 13,
     "nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16": 14,
     "DavidAU/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NEO-CODER-MAX-MTP-GGUF": 15,
-    "reflection/Beam-1.0-501B-A23B": 16,
-    "Qwen/Qwen3.8-Flash-Next": 17,
+    "Qwen/Qwen3.8-Flash-Next": 16,
+    "reflection/Beam-1.0-501B-A23B": 17,
     "ornith-ai/Ornith-1.5-122B": 18,
     "KRAFTON/Raon-1-mini-preview": 19,
     "LiquidAI/LFM2.5-24B-A2B": 20,
@@ -35,8 +35,8 @@
     "nvidia/Nemotron-3.5-Parse": 32,
     "MemTensor/MemT-1.0-Nano": 33,
     "ConwayResearch/Underdog-Saluki-27B-1.0": 34,
-    "DavidAU/Qwen3.8-27B-Turbo-Brilliance-50X-Reasoning-Instruct-NEO-MAX-MTP-GGUF": 35,
-    "prism-ml/Ternary-Bonsai-2-27B-gguf": 36,
+    "prism-ml/Ternary-Bonsai-2-27B-gguf": 35,
+    "DavidAU/Qwen3.8-27B-Turbo-Brilliance-50X-Reasoning-Instruct-NEO-MAX-MTP-GGUF": 36,
     "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF": 37,
     "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF": 38,
     "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF": 39,
@@ -50,12 +50,12 @@
     "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF": 47,
     "nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-GGUF": 48,
     "dealignai/DeepSeek-V4.1-Flash-UNCENSORED-FP8": 49,
-    "prism-ml/Ternary-Bonsai-2-9B-gguf": 50,
-    "DavidAU/Qwen3.8-Flash-Next-Abliterated-Uncensored-Turbo-Brilliance-50x-Reasoning-Instruct-GSQ-RCO-GGUF": 51,
-    "DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF": 52,
+    "DavidAU/Qwen3.8-Flash-Next-Abliterated-Uncensored-Turbo-Brilliance-50x-Reasoning-Instruct-GSQ-RCO-GGUF": 50,
+    "DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF": 51,
+    "meta-models/Muse-Spark-Open-816B-A42B-NVFP4": 52,
     "agentionai/Qwen3.8-Flash-Next-Gyro-GGUF": 53,
     "incoai/Qwen3.8-Flash-Next-DFlash2": 54,
-    "meta-models/Muse-Spark-Open-816B-A42B-NVFP4": 55,
+    "prism-ml/Ternary-Bonsai-2-9B-gguf": 55,
     "ATH-MaaS/OvisOCR3": 56,
     "meta-llama/Llama-3.1-8B-Instruct": 57,
     "zai-org/GLM-5.3-Flash": 58,
@@ -63,8 +63,8 @@
     "openbmb/MiniCPM-V-4.7-35B-A3B-gguf": 60,
     "unsloth/Qwen3.8-Flash-Next-GGUF": 61,
     "nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB": 62,
-    "LiquidAI/LFM2.5-24B-A2B-GGUF": 63,
-    "migtissera/Tess-4.5-27B": 64,
+    "migtissera/Tess-4.5-27B": 63,
+    "LiquidAI/LFM2.5-24B-A2B-GGUF": 64,
     "LibertAIDAI/DeepSeek-V4.1-Flash-1017-EXL3-2.9bpw": 65,
     "InternScience/Sage-A1.5-Q4_K_M-GGUF": 66,
     "unsloth/LFM2.5-24B-A2B-GGUF": 67,
@@ -81,8 +81,8 @@
     "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16": 78,
     "fastino/GLiDE": 79,
     "peasantsmith/DeepSeek-V4.1-Flash-1017-Maya-GGUF": 80,
-    "google/gemma-4-31B-it": 81,
-    "inclusionAI/Ling-3.1-flash": 82,
+    "inclusionAI/Ling-3.1-flash": 81,
+    "google/gemma-4-31B-it": 82,
     "meta-models/Muse-Glimmer-30B": 83,
     "DavidAU/Qwen3.8-27B-Jumbo-Fusion-IQ-747-900-Turbo-Brilliance-50X-Reasoning-Instruct-NEO-MAX-MTP-GGUF": 84,
     "ornith-ai/Ornith-1.5-122B-GGUF": 85,
@@ -108,8 +108,8 @@
     "ornith-ai/Ornith-1.5-35B-A3B-GGUF": 105,
     "bottlecapai/ThinkingCap-Qwen3.8-Flash-Next": 106,
     "orcarouter/Qwen3.8-27B-Uncensored-GGUF": 107,
-    "unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF": 108,
-    "Aleph-Alpha/Kolibri-1": 109,
+    "Aleph-Alpha/Kolibri-1": 108,
+    "unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF": 109,
     "ibm-granite/granite-switch-4.1-8b": 110,
     "kaushikvira/DeepSeek-V4.1-Flash-1017-GSQ-agentic-strata": 111,
     "Infatoshi/DeepSeek-V4.1-Flash-1017-MXFP4-uncensored": 112,
@@ -122,14 +122,14 @@
     "yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF": 119
   },
   "watch": {
-    "updated": "2026-10-23T18:52:46+00:00",
+    "updated": "2026-10-23T19:01:22+00:00",
     "reviewed": "2026-10-23",
     "items": [
       {
         "name": "Mistral Large 4",
         "author": "mistralai",
         "match": "^mistral[ _-]*large[ _-]*4(?![.\\d])",
-        "status": "Preview live",
+        "status": "Weights pending",
         "conf": "hi",
         "what": "Official API preview; Mistral says open weights will follow by the end of October.",
         "when": "By Oct 31 · announced weights window",
@@ -141,6 +141,7 @@
             "date": "2026-10-06"
           }
         ],
+        "event": "weights",
         "reviewed": "2026-10-23"
       },
       {
@@ -164,31 +165,6 @@
             "date": "2026-10-07"
           }
         ],
-        "reviewed": "2026-10-23"
-      },
-      {
-        "name": "Kimi K3.1",
-        "author": "moonshotai",
-        "match": "^kimi[ _-]*k3[.]1(?![.\\d])",
-        "status": "Teaser / reports",
-        "conf": "md",
-        "what": "Launch teaser and reported Kibitz Arena tests. The K3.1 identity and timing are reported; open-weight terms are not verified.",
-        "when": "Before Oct 27 · social claim, unconfirmed",
-        "until": "2026-10-26",
-        "sources": [
-          {
-            "label": "TestingCatalog · teaser and source posts",
-            "url": "https://www.testingcatalog.com/kimi-k3-1-spotted-testing-arena/",
-            "date": "2026-10-23"
-          }
-        ],
-        "seen": "2026-10-23T09:03:03+00:00",
-        "latest": {
-          "title": "Kimi K3.1 is prepared for upcoming release after Arena testing",
-          "source": "TestingCatalog AI News",
-          "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBBMm9rbzAtcGRESVA4TTZjTy1hSTllQ2FUcWR1OEpZaFNWUUtlYjJHbmhkb181Q2Z1eUhCMGV5ejhwSzFiSkxzaS1LREI2cGZKZ3RqRVhKd0NacnVldTdsLXdWLXJzYjlOa09iQlY2RlE?oc=5",
-          "published": "2026-10-23T09:03:03+00:00"
-        },
         "reviewed": "2026-10-23"
       },
       {
@@ -290,33 +266,32 @@
           }
         ],
         "reviewed": "2026-10-23"
-      },
-      {
-        "name": "Kimi K2.8",
-        "author": "moonshotai",
-        "match": "^Kimi[ _-]*K2\\.8(?![.\\d])",
-        "status": "Unverified report",
-        "conf": "lo",
-        "what": "Kimi K2.8 Preview: 1M Context Behind One Unchanged Model ID",
-        "when": "No verified date",
-        "discovered": true,
-        "sources": [
-          {
-            "label": "Intelligent Living",
-            "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOY1o1aTJFTW0yVVc1bWpNdThyVk1aQk80NndNcHloQ2YtelFNTFRfblRocXZoakZwMlRJalpTV1cxLU5uQXp6M3E2QnRiQjJpWmJtWmZYS2dHdlNvdVhyNUE4RThqVU9TREttNktzZXRDVUQtVmNfbS1XYkNUZ2RIVw?oc=5",
-            "date": "2026-10-16"
-          }
-        ],
-        "seen": "2026-10-16T05:36:14+00:00",
-        "latest": {
-          "title": "Kimi K2.8 Preview: 1M Context Behind One Unchanged Model ID",
-          "source": "Intelligent Living",
-          "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOY1o1aTJFTW0yVVc1bWpNdThyVk1aQk80NndNcHloQ2YtelFNTFRfblRocXZoakZwMlRJalpTV1cxLU5uQXp6M3E2QnRiQjJpWmJtWmZYS2dHdlNvdVhyNUE4RThqVU9TREttNktzZXRDVUQtVmNfbS1XYkNUZ2RIVw?oc=5",
-          "published": "2026-10-16T05:36:14+00:00"
-        },
-        "reviewed": null
       }
     ],
-    "landed": {}
+    "landed": {},
+    "released": {
+      "kimik3.1": {
+        "url": "https://models.dev/api.json",
+        "checked": "2026-10-23T19:01:22+00:00"
+      }
+    },
+    "release_checks": [
+      {
+        "name": "CoreWeave public catalog",
+        "url": "https://www.coreweave.com/products/coreweave-forge/serverless-inference",
+        "count": 23
+      },
+      {
+        "name": "models.dev dated API releases (excluding OpenRouter)",
+        "url": "https://models.dev/api.json",
+        "count": 8411
+      },
+      {
+        "name": "Kimi official product releases",
+        "url": "https://www.kimi.com/code/docs/en/kimi-code/whats-new.html",
+        "count": 4
+      }
+    ],
+    "vetted": "2026-10-23T19:01:22+00:00"
   }
 }

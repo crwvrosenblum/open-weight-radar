@@ -29,7 +29,7 @@ MODEL_NAMES = {
     'nvidia': r'\bnemotron[ -]*\d+(?:\.\d+)?',
     'openai': r'\bgpt[ -]*oss[ -]*\d+',
 }
-UPCOMING = r'rumou?r|leak|upcoming|in training|expected|spotted|teaser|prepar|preview|coming|planned|unreleased'
+UPCOMING = r'\b(?:rumou?r(?:s|ed)?|leak(?:s|ed)?|upcoming|in training|expected|spotted|teaser|prepar\w*|coming|planned|unreleased)\b'
 TASKS = {'text-generation', 'image-text-to-text', 'text2text-generation', 'any-to-any'}
 
 
@@ -150,7 +150,71 @@ def model_key(name):
     return re.sub(r'[\s_-]+', '', name.casefold())
 
 
-def rumored_models(news, models, previous, now):
+COREWEAVE_CATALOG = 'https://www.coreweave.com/products/coreweave-forge/serverless-inference'
+MODEL_CATALOG = 'https://models.dev/api.json'
+KIMI_RELEASES = 'https://www.kimi.com/code/docs/en/kimi-code/whats-new.html'
+
+
+def text_only(markup):
+    return html.unescape(re.sub(r'<[^>]+>', ' ', markup)).strip()
+
+
+def release_names(text, url):
+    records = []
+    for author, pattern in MODEL_NAMES.items():
+        match = re.search(pattern, text, re.I)
+        if match:
+            records.append({'author': author, 'name': match[0], 'url': url})
+    return records
+
+
+def collect_release_catalog(now):
+    # Availability is broader than public weights: API and product releases count.
+    records, checks = [], []
+    page = http(COREWEAVE_CATALOG).decode()
+    names = re.findall(r'<h3\b[^>]*class="[^"]*\bmodels-grid-item-title\b[^"]*"[^>]*>(.*?)</h3>', page, re.S)
+    if not names:
+        raise ValueError('CoreWeave public catalog has no model headings')
+    for name in names:
+        records.extend(release_names(text_only(name), COREWEAVE_CATALOG))
+    checks.append({'name': 'CoreWeave public catalog', 'url': COREWEAVE_CATALOG, 'count': len(names)})
+
+    catalog = json.loads(http(MODEL_CATALOG))
+    if not isinstance(catalog, dict) or not any(p.get('models') for p in catalog.values()):
+        raise ValueError('Empty public API catalog')
+    count = 0
+    for provider, entry in catalog.items():
+        if provider == 'openrouter':
+            continue
+        for model_id, model in entry.get('models', {}).items():
+            date = model.get('release_date') or ''
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', date) or date > now.date().isoformat():
+                continue
+            count += 1
+            records.extend(release_names(model.get('name', '') + ' ' + model_id, MODEL_CATALOG))
+    if not count:
+        raise ValueError('Public API catalog has no dated releases')
+    checks.append({'name': 'models.dev dated API releases (excluding OpenRouter)', 'url': MODEL_CATALOG, 'count': count})
+
+    page = http(KIMI_RELEASES).decode()
+    count = 0
+    for heading, body in re.findall(r'<h2\b[^>]*>(.*?)</h2>(.*?)(?=<h2\b|$)', page, re.S):
+        title = text_only(heading)
+        version = re.search(r'\bK\d+(?:[.]\d+)?', title, re.I)
+        date = re.search(r'\b[A-Z][a-z]+ \d{1,2}, \d{4}', title)
+        if not version or not date or not re.search(r'fully rolled out|now released|is live|now available', title + text_only(body)[:1200], re.I):
+            continue
+        released = dt.datetime.strptime(date[0], '%B %d, %Y').date()
+        if released <= now.date():
+            records.extend(release_names('Kimi ' + version[0], KIMI_RELEASES))
+            count += 1
+    if not count:
+        raise ValueError('Kimi changelog has no recognizable model releases')
+    checks.append({'name': 'Kimi official product releases', 'url': KIMI_RELEASES, 'count': count})
+    return {'records': records, 'checks': checks, 'updated': now.isoformat()}
+
+
+def rumored_models(news, models, previous, now, release_catalog):
     curated = json.loads((ROOT / 'rumors.json').read_text())
     items = {model_key(item['name']): dict(item) for item in curated['items']}
     # Persist discovered names so a transient news outage cannot erase a rumor.
@@ -160,7 +224,7 @@ def rumored_models(news, models, previous, now):
         key = model_key(item['name'])
         if key in items:
             items[key].update({field: item[field] for field in ('seen', 'latest') if field in item})
-        elif item.get('discovered') and stamp(item.get('seen')) and now - stamp(item['seen']) <= dt.timedelta(days=30):
+        elif item.get('discovered') and re.search(UPCOMING, item.get('what', ''), re.I) and stamp(item.get('seen')) and now - stamp(item['seen']) <= dt.timedelta(days=30):
             items[key] = dict(item)
     for report in news:
         if not re.search(UPCOMING, report['title'], re.I):
@@ -186,6 +250,7 @@ def rumored_models(news, models, previous, now):
                 item['latest'] = report
     result = []
     landed = dict(previous.get('landed', {}))
+    released = dict(previous.get('released', {}))
     for key, item in items.items():
         item['sources'] = [source for source in item.get('sources', []) if safe_url(source.get('url'))]
         if not item['sources'] or item.get('conf') not in ('hi', 'md', 'lo'):
@@ -197,15 +262,19 @@ def rumored_models(news, models, previous, now):
         matches = [model for model in models if model['author'].casefold() == item['author'].casefold() and pattern.search(model['name'])]
         if matches:
             landed[key] = matches[0]['url']
-        if key in landed:
-            # Remember released names even after they leave the bounded catalog.
+        if item.get('event') != 'weights':
+            shipped = next((record for record in release_catalog['records'] if record['author'].casefold() == item['author'].casefold() and pattern.search(record['name'])), None)
+            if shipped:
+                released[key] = {'url': shipped['url'], 'checked': release_catalog['updated']}
+        if key in landed or (key in released and item.get('event') != 'weights'):
+            # Remember both product releases and public weights across snapshots.
             continue
         until = item.get('until')
         if until and now.date().isoformat() > until:
             item['when'] = 'Reported window passed · no weights found in tracked sources'
         item['reviewed'] = curated['reviewed'] if not item.get('discovered') else None
         result.append(item)
-    return {'updated': now.isoformat(), 'reviewed': curated['reviewed'], 'items': result[:10], 'landed': landed}
+    return {'updated': now.isoformat(), 'reviewed': curated['reviewed'], 'items': result[:10], 'landed': landed, 'released': released, 'release_checks': release_catalog['checks'], 'vetted': release_catalog['updated']}
 
 
 def render(data):
@@ -247,6 +316,8 @@ def render(data):
         'COUNT': str(data['model_count']), 'KPIS': kpis, 'DIGEST': digest,
         'RUMOR_ROWS': ''.join(rumor_rows) or '<li class="coverage">No sourced, unreleased model candidates in this snapshot.</li>',
         'REVIEWED': esc(data['watch']['reviewed']),
+        'RELEASE_CHECKS': ' · '.join(link(check['url'], check['name']) for check in data['watch']['release_checks']),
+        'VETTED': esc(data['watch']['vetted'].replace('T', ' ').replace('+00:00', ' UTC')),
         'WATCH_TIME': esc(data['watch'].get('updated') or 'unavailable'), 'WATCH_WARNING': warning,
         'TOP_ROWS': movers, 'RELEASE_ROWS': release_rows or '<tr><td colspan="6">No recent repositories in this snapshot.</td></tr>',
         'RELEASE_COUNT': str(len(releases)), 'COVERAGE': esc(coverage),
@@ -272,14 +343,16 @@ def main():
     for rank, model in enumerate(ranked, 1):
         model['movement'] = prior_ranks[model['id']] - rank if model['id'] in prior_ranks else None
     releases = sorted((model for model in models if stamp(model['created']) and now - dt.timedelta(days=30) <= stamp(model['created']) <= now), key=lambda model: model['created'], reverse=True)
+    # Do not publish a fresh rumor list if mandatory release checks are unavailable.
+    release_catalog = collect_release_catalog(now)
     try:
         news = collect_news(now)
         if not news:
             raise ValueError('No recent news items')
-        watch = rumored_models(news, models, previous.get('watch', {}), now)
+        watch = rumored_models(news, models, previous.get('watch', {}), now, release_catalog)
     except Exception as error:
         print(f'Warning: news refresh failed ({type(error).__name__}); retaining previous reports')
-        watch = rumored_models([], models, previous.get('watch', {}), now)
+        watch = rumored_models([], models, previous.get('watch', {}), now, release_catalog)
         watch['updated'] = previous.get('watch', {}).get('updated')
         watch['warning'] = 'News refresh unavailable. Showing dated source evidence and previous reports; weight availability was checked in this build.'
     data = {'updated': now.isoformat(), 'model_count': len(models), 'top': ranked[:15], 'releases': releases,

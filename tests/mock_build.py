@@ -30,6 +30,16 @@ records[2]['tags'] = ['license:"><img src=x onerror=alert(1)>']
 
 
 def fake_http(url):
+    if url == build.COREWEAVE_CATALOG:
+        return b'<h3 class="models-grid-item-title">Qwen3.8 27B</h3>'
+    if url == build.MODEL_CATALOG:
+        return json.dumps({'kimi-code-plan-cn': {'models': {
+            'kimi-for-coding': {'name': 'Kimi K2.8 Preview', 'release_date': '2026-09-11'},
+            'future-qwen': {'name': 'Qwen 4', 'release_date': (now + dt.timedelta(days=1)).date().isoformat()},
+        }}, 'openrouter': {'models': {'qwen4-placeholder': {'name': 'Qwen 4', 'release_date': '2026-01-01'}}}}).encode()
+    if url == build.KIMI_RELEASES:
+        return (b'<h2>K2.8 Preview September 11, 2026</h2><p>K2.8 Preview is now fully rolled out.</p>'
+                b'<h2>K3.1 Pro Series is live October 23, 2026</h2><p>Now available in Kimi Code.</p>')
     if 'huggingface.co/api/models?' in url:
         return json.dumps(records).encode()
     return (f'<rss><channel><item><title>Qwen Test-Model-1 release - Example News</title>'
@@ -50,6 +60,7 @@ with tempfile.TemporaryDirectory() as directory:
     ]
     (root / 'rumors.json').write_text(json.dumps({'reviewed': now.date().isoformat(), 'items': seeds}))
     with patch.object(build, 'ROOT', root), patch.object(build, 'http', fake_http):
+        vetted = build.collect_release_catalog(now)
         build.main()
         page = (root / 'site/index.html').read_text()
         assert '/*__DATA__*/null' not in page
@@ -65,20 +76,36 @@ with tempfile.TemporaryDirectory() as directory:
         lookalikes = [dict(data['top'][0], author='Qwen', name='Qwen4.5-27B'),
                       dict(data['top'][0], author='Qwen', name='Qwen40-27B'),
                       dict(data['top'][0], author='Community', name='Qwen4-27B')]
-        assert any(i['name'] == 'Qwen 4' for i in build.rumored_models([], lookalikes, {}, now)['items'])
+        assert any(i['name'] == 'Qwen 4' for i in build.rumored_models([], lookalikes, {}, now, vetted)['items'])
         released = [dict(data['top'][0], author='Qwen', name='Qwen4-27B')]
-        landed = build.rumored_models([], released, {}, now)
+        landed = build.rumored_models([], released, {}, now, vetted)
         assert not any(i['name'] == 'Qwen 4' for i in landed['items'])
-        assert not any(i['name'] == 'Qwen 4' for i in build.rumored_models([], [], landed, now)['items'])
+        assert not any(i['name'] == 'Qwen 4' for i in build.rumored_models([], [], landed, now, vetted)['items'])
         # Unreviewed names can be discovered from explicitly future-looking news.
         report = {'title': 'Qwen 6 spotted in upcoming model leak', 'source': 'Example News',
                   'url': 'https://example.com/new-model', 'published': now.isoformat()}
-        discovered = build.rumored_models([report], [], {}, now)
+        discovered = build.rumored_models([report], [], {}, now, vetted)
         candidate = next(i for i in discovered['items'] if i['name'] == 'Qwen 6')
         assert candidate['conf'] == 'lo' and candidate['sources'][0]['url'] == report['url']
-        assert any(i['name'] == 'Qwen 6' for i in build.rumored_models([], [], discovered, now)['items'])
-        coverage = build.rumored_models([dict(report, title='Qwen 4 release rumored soon')], [], {}, now)
-        retained = build.rumored_models([], [], coverage, now)
+        assert any(i['name'] == 'Qwen 6' for i in build.rumored_models([], [], discovered, now, vetted)['items'])
+        kimi = dict(report, title='Kimi K2.8 rumored to be coming soon')
+        excluded = build.rumored_models([kimi], [], {}, now, vetted)
+        assert not any(i['name'] == 'Kimi K2.8' for i in excluded['items'])
+        assert excluded['released']['kimik2.8']['url'] == build.MODEL_CATALOG
+        assert not any(i['name'] == 'Kimi K2.8' for i in build.rumored_models([kimi], [], excluded, now, dict(vetted, records=[]))['items'])
+        k31 = dict(report, title='Kimi K3.1 rumored upcoming release')
+        assert not any(i['name'] == 'Kimi K3.1' for i in build.rumored_models([k31], [], {}, now, vetted)['items'])
+        preview = dict(report, title='Kimi K7 Preview: already serving coding users')
+        assert not any(i['name'] == 'Kimi K7' for i in build.rumored_models([preview], [], {}, now, vetted)['items'])
+        # An announced weights release is a separate event from a live API.
+        weight_seed = dict(seeds[1], event='weights', status='Weights pending')
+        (root / 'rumors.json').write_text(json.dumps({'reviewed': now.date().isoformat(), 'items': [weight_seed]}))
+        api_qwen = dict(vetted, records=[{'name': 'Qwen 4', 'author': 'Qwen', 'url': build.COREWEAVE_CATALOG}])
+        assert build.rumored_models([], [], {}, now, api_qwen)['items'][0]['name'] == 'Qwen 4'
+        assert not build.rumored_models([], released, {}, now, api_qwen)['items']
+        (root / 'rumors.json').write_text(json.dumps({'reviewed': now.date().isoformat(), 'items': seeds}))
+        coverage = build.rumored_models([dict(report, title='Qwen 4 release rumored soon')], [], {}, now, vetted)
+        retained = build.rumored_models([], [], coverage, now, vetted)
         assert next(i for i in retained['items'] if i['name'] == 'Qwen 4')['latest']['url'] == report['url']
         assert '<script>alert(1)</script>' not in page
         assert '&lt;img src=x onerror=alert(1)&gt;' in page
@@ -112,6 +139,17 @@ with tempfile.TemporaryDirectory() as directory:
                 build.main()
                 raise AssertionError('Model outage did not fail the build')
             except RuntimeError:
+                pass
+        assert (root / 'state.json').read_bytes() == before
+        def catalog_outage(url):
+            if url == build.COREWEAVE_CATALOG:
+                raise TimeoutError('catalog fixture outage')
+            return fake_http(url)
+        with patch.object(build, 'http', catalog_outage):
+            try:
+                build.main()
+                raise AssertionError('Release checks were bypassed')
+            except TimeoutError:
                 pass
         assert (root / 'state.json').read_bytes() == before
 print('Mock build passed: filtering, deduplication, data injection, escaping, state, and source outages')
