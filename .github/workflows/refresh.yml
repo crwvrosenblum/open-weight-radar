@@ -1,0 +1,61 @@
+name: Refresh Open-Weight Radar
+on:
+  schedule:
+    - cron: '0 12,22 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: radar
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Monthly keepalive (also runs during upstream outages)
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ "$(date -u +%d)" = '01' ] && [ "$(git log -1 --format=%cs)" != "$(date -u +%F)" ]; then
+            git commit --allow-empty -m 'Monthly schedule keepalive [skip ci]'
+            git push
+          fi
+      - name: Test realistic fixtures
+        run: python tests/mock_build.py
+      - name: Build from public sources
+        run: python build.py
+      - name: Check generated page
+        run: python tests/verify_site.py site/index.html
+      - name: Check browser script syntax
+        run: |
+          python - <<'PY'
+          import pathlib, re
+          page = pathlib.Path('site/index.html').read_text()
+          script = re.findall(r'<script>(.*?)</script>', page, re.S)[0]
+          pathlib.Path('/tmp/radar-inline.js').write_text(script)
+          PY
+          node --check /tmp/radar-inline.js
+      - name: Commit snapshot
+        run: |
+          git add state.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh public-source snapshot [skip ci]'
+            git push
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

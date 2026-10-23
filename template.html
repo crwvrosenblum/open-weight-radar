@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open-Weight Model Radar</title>
+<meta name="description" content="Open-weight LLM releases, Hugging Face momentum, and sourced launch signals. Refreshed twice daily, with no API keys or paid services.">
+<meta property="og:title" content="Open-Weight Model Radar">
+<meta property="og:description" content="Follow open-weight model releases, community momentum, and launch reports. Fresh public-source data twice daily.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#4f46e5">
+<style>
+:root{color-scheme:light;--bg:#f8fafc;--ink:#172033;--muted:#64748b;--line:#e5e7eb;--accent:#4f46e5;--soft:#eef2ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1280px;margin:0 auto;padding:44px 28px 28px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,summary:focus-visible{outline:3px solid #a5b4fc;outline-offset:3px}header{margin-bottom:28px}.eyebrow{font-size:11px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;background:var(--accent);border-radius:50%}h1{font-size:clamp(28px,4vw,40px);letter-spacing:-.045em;line-height:1.15;margin:12px 0}header p{color:var(--muted);margin:8px 0}.meta{font-size:12px}.topline{display:flex;align-items:center;justify-content:space-between;gap:16px}.repo{font-size:12px;border:1px solid var(--line);padding:6px 12px;border-radius:100px;background:white}.kpis,.digest{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:26px}.kpi,.panel,.digest-card{background:white;border:1px solid var(--line);border-radius:10px}.kpi{padding:20px;min-width:0}.kpi>span{color:var(--muted);font-size:12px}.kpi strong{display:block;font-size:22px;letter-spacing:-.025em;margin:8px 0;overflow-wrap:anywhere;line-height:1.25}.kpi small{font-size:11px;color:var(--muted)}.section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:30px 0 12px}h2{font-size:17px;letter-spacing:-.02em;margin:0}.section-heading>span,.hint{font-size:12px;color:var(--muted)}.digest-card{padding:17px 18px;border-left:3px solid var(--tone);min-width:0}.digest-card h3{font-size:14px;line-height:1.4;overflow-wrap:anywhere;margin:12px 0 7px}.digest-card p{font-size:12px;color:var(--muted);margin:0}.release{--tone:#4f46e5;--tint:#eef2ff}.momentum{--tone:#059669;--tint:#dcfce7}.trend{--tone:#d97706;--tint:#fef3c7}.chip{display:inline-block;font-size:9px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--tint);color:var(--tone)}.panel{overflow:hidden;margin-bottom:22px}.panel-head{padding:20px 22px 14px}.panel-head p{font-size:12px;color:var(--muted);margin:5px 0 0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px;text-align:left}th{font-size:10px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:#fafbfe;padding:11px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap}td{padding:13px 16px;border-bottom:1px solid #f0f2f6;vertical-align:top}tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafbff}.model{font-weight:600;min-width:135px}.model a{overflow-wrap:anywhere}td small{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:3px}.numeric{text-align:right;font-variant-numeric:tabular-nums}.nowrap{white-space:nowrap}.pill{display:inline-block;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:650;white-space:nowrap}.md{background:#fef3c7;color:#92400e}.lo{background:#fee2e2;color:#b91c1c}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}.chart-box{position:relative;height:460px;margin:8px 18px 12px}.chart-panel .hint{padding:0 22px 18px}.chart-panel canvas{max-width:100%}.notice{background:#fffbeb;color:#92400e;font-size:12px;padding:12px 22px;margin:0}details{color:var(--muted);font-size:12px;padding:14px 22px;border-top:1px solid var(--line)}summary{cursor:pointer;font-weight:600}details p{line-height:1.7}footer{font-size:11px;color:var(--muted);line-height:1.8;border-top:1px solid var(--line);padding-top:18px;margin-top:16px}footer p{margin:6px 0}.coverage{padding:0 22px 16px;color:var(--muted);font-size:11px;line-height:1.8}.watch-table td:nth-child(3){min-width:290px;max-width:560px}.watch-table td:last-child{min-width:125px}#chart-fallback{margin:22px;color:var(--muted);font-size:12px}
+@media(max-width:1100px){.digest,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr 1.25fr}.kpi strong{font-size:24px}}
+@media(max-width:899px){.split{grid-template-columns:1fr}.chart-box{height:420px}.section-heading{align-items:flex-start;flex-direction:column;gap:3px}}
+@media(max-width:520px){main{padding:24px 14px}.kpis,.digest{gap:10px}.kpi{padding:14px}.kpi strong{font-size:18px}.kpi small{font-size:10px}.digest-card{padding:14px 12px}.repo{padding:5px 9px}td,th{padding:11px 12px}.panel-head{padding:17px 16px 13px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="topline"><div class="eyebrow"><span class="dot"></span> The open model landscape</div><a class="repo" href="https://github.com/crwvrosenblum/open-weight-radar" target="_blank" rel="noopener noreferrer">View source ↗</a></div>
+<h1>Open-Weight Model Radar</h1>
+<p>New weights. Community momentum. What’s coming next.</p>
+<p class="meta">Updated {{UPDATED}} · {{COUNT}} weight-bearing LLM repositories in this snapshot · refreshes 2× daily</p>
+</header>
+<section class="kpis" aria-label="Snapshot highlights">{{KPIS}}</section>
+<div class="section-heading"><h2>The quick read</h2><span>Computed from this snapshot · no AI summaries</span></div>
+<section class="digest" aria-label="Snapshot digest">{{DIGEST}}</section>
+<section class="panel" aria-labelledby="watch-title">
+<div class="panel-head"><h2 id="watch-title">Launch watch</h2><p>Latest matching news by model family · checked {{WATCH_TIME}} · reports are not verified release forecasts</p></div>
+{{WATCH_WARNING}}
+<div class="table-scroll"><table class="watch-table"><thead><tr><th>Model family</th><th>Signal</th><th>Latest report</th><th>Published · UTC</th><th>Matching weights?</th></tr></thead><tbody>{{WATCH_ROWS}}</tbody></table></div>
+<details><summary>How to read launch signals</summary><p>Headlines come from a public Google News RSS query covering the last 14 days. “Rumor” means the headline explicitly mentions a rumor, leak, speculation, or an unconfirmed claim. “Report” is a news item, not a confidence judgment. A weights link appears only when the headline contains an exact model name found in this snapshot. “Not verified” means no exact match was found; it does not establish that weights are unavailable. Linked news opens through Google News. No launch dates or confidence scores are invented.</p></details>
+</section>
+<div class="split">
+<section class="panel chart-panel" aria-labelledby="chart-title"><div class="panel-head"><h2 id="chart-title">Trending models, by downloads</h2><p>Current top 15 by Hugging Face trending score · rolling 30 days</p></div><div class="chart-box" id="chart-box" hidden><canvas id="chart" aria-label="Rolling 30-day downloads of the 15 trending models; exact values in the adjacent table" role="img"></canvas></div><p id="chart-fallback">Download counts are available in the trending table. The chart appears when Chart.js is available.</p><p class="hint">Downloads measure repository activity, not inference use, unique users, or model quality.</p></section>
+<section class="panel" aria-labelledby="momentum-title"><div class="panel-head"><h2 id="momentum-title">Community momentum</h2><p>Sorted by trending score · rank change vs {{PREVIOUS}}</p></div><div class="table-scroll"><table><thead><tr><th>#</th><th>Model</th><th class="numeric">Score</th><th class="numeric">Downloads · 30d</th><th class="numeric">Likes</th><th>Rank Δ</th></tr></thead><tbody>{{TOP_ROWS}}</tbody></table></div></section>
+</div>
+<section class="panel" aria-labelledby="releases-title"><div class="panel-head"><h2 id="releases-title">New weight repositories <span class="hint">· last 30 days · {{RELEASE_COUNT}}</span></h2><p>Newest first. Dates are repository creation dates; public weight publication may be later.</p></div><div class="table-scroll"><table><thead><tr><th>Created · UTC</th><th>Model / weights</th><th>Task</th><th>License / access</th><th class="numeric">Downloads · 30d</th><th class="numeric">Likes</th></tr></thead><tbody>{{RELEASE_ROWS}}</tbody></table></div><details><summary>Coverage and methodology</summary><p>The snapshot combines the first 60 trending text-generation and image-text-to-text results with each tracked lab’s 60 most recently created repositories. It includes text-generation, text2text-generation, image-text-to-text, and any-to-any models with public metadata and at least one weight file; adapter-only repositories are excluded. Quantized variants and fine-tunes may appear as distinct repositories. This is a bounded sample, not a complete catalog of open models. Downloads are rolling 30-day counts; likes are cumulative; trending score is Hugging Face’s own momentum signal. Rank changes compare positions in the sampled trending list at consecutive successful builds; “New” means newly observed in that list. Rank movement starts after the first snapshot.</p><p>Tracked labs: {{COVERAGE}}. Open-weight does not imply an open-source or commercially permissive license. Gated weights may require accepting terms or requesting access.</p></details><div class="coverage">{{LAB_LINKS}}</div></section>
+<footer><p>Open-weight here means a public Hugging Face LLM repository listing downloadable weight files; gated access and license restrictions may apply. Review each model card.</p><p>Sources: <a href="https://huggingface.co/models?sort=trending" target="_blank" rel="noopener noreferrer">Hugging Face public model metadata</a> and <a href="https://news.google.com" target="_blank" rel="noopener noreferrer">Google News RSS</a>. All timestamps use UTC. Snapshot summaries are computed, and news claims require verification.</p><p>Updated twice daily · <a href="https://github.com/crwvrosenblum/open-weight-radar/actions/workflows/refresh.yml" target="_blank" rel="noopener noreferrer">Refresh history ↗</a></p></footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+<script>
+const DATA = /*__DATA__*/null;
+if (window.Chart) {
+  document.getElementById('chart-box').hidden = false;
+  document.getElementById('chart-fallback').hidden = true;
+  const compact = value => {
+    for (const [scale, suffix] of [[1e12,'T'],[1e9,'B'],[1e6,'M'],[1e3,'K']]) {
+      if (Math.abs(value) >= scale) return (value / scale).toFixed(1) + suffix;
+    }
+    return String(value);
+  };
+  new Chart(document.getElementById('chart'), {
+    type: 'bar',
+    data: {labels: DATA.top.map(m => m.name), datasets: [{label: 'Downloads · rolling 30d', data: DATA.top.map(m => m.downloads), backgroundColor:'#4f46e5', borderRadius:3, maxBarThickness:18}]},
+    options: {indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:context => ' ' + context.parsed.x.toLocaleString() + ' downloads'}}}, scales:{x:{beginAtZero:true,ticks:{callback:compact,color:'#64748b',maxTicksLimit:5},grid:{color:'#f0f2f6'},border:{display:false}},y:{ticks:{color:'#475569',font:{size:10},callback:function(value){const label=this.getLabelForValue(value);return label.length>29 ? label.slice(0,27)+'…' : label;}},grid:{display:false},border:{display:false}}}}
+  });
+}
+</script>
+</body>
+</html>
