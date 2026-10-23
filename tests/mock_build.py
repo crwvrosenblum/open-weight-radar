@@ -74,9 +74,13 @@ with tempfile.TemporaryDirectory() as directory:
                    build.normalize(dict(records[0], id='reflection/Beam-1.0-501B-A23B')),
                    build.normalize(dict(records[0], id='nvidia/Cosmos3-H-Dreams', pipeline_tag='image-to-video')),
                    build.normalize(dict(records[0], id='Community/Kimi-K3.1'))]
-        comparison = build.model_watch(focused, dict(vetted, coreweave=['Reflection Beam 1.0', 'NVIDIA Nemotron 3.5 Ultra']))
+        comparison = build.model_watch(focused, dict(vetted, coreweave=['Reflection Beam 1.0', 'NVIDIA Nemotron 3.5 Ultra',
+                                                                      'Thinking Machines Inkling', 'NVIDIA Cosmos3-H-Dreams']))
         inkling = next(i for i in comparison['items'] if i['name'] == 'Inkling')
         assert inkling['weights'] and inkling['total_b'] == 975 and inkling['active_b'] == 41
+        assert inkling['coreweave'] == ['Thinking Machines Inkling']
+        assert not next(i for i in comparison['items'] if i['name'] == 'Inkling-Small')['coreweave']
+        assert next(i for i in comparison['items'] if i['name'] == 'Cosmos3-H-Dreams')['coreweave']
         assert next(i for i in comparison['items'] if i['name'] == 'Beam 1.0')['coreweave']
         assert not next(i for i in comparison['items'] if i['name'] == 'Nemotron 3 Ultra')['coreweave']
         kimi_focus = next(i for i in comparison['items'] if i['name'] == 'Kimi K3.1 Pro')
