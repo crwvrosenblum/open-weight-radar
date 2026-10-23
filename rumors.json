@@ -1,0 +1,100 @@
+{
+  "reviewed": "2026-10-23",
+  "items": [
+    {
+      "name": "Mistral Large 4",
+      "author": "mistralai",
+      "match": "^mistral[ _-]*large[ _-]*4(?![.\\d])",
+      "status": "Preview live",
+      "conf": "hi",
+      "what": "Official API preview; Mistral says open weights will follow by the end of October.",
+      "when": "By Oct 31 · announced weights window",
+      "until": "2026-10-31",
+      "sources": [{"label": "Mistral announcement", "url": "https://mistral.ai/news/mistral-large-4/", "date": "2026-10-06"}]
+    },
+    {
+      "name": "Qwen 4",
+      "author": "Qwen",
+      "match": "^qwen[ _-]*4(?![.\\d])",
+      "status": "In training",
+      "conf": "md",
+      "what": "Alibaba confirmed training. Community reports suggest Arena testing; a launch date and weights terms remain unconfirmed.",
+      "when": "Late October · community rumor, not a commitment",
+      "until": "2026-10-31",
+      "sources": [
+        {"label": "Alibaba announcement", "url": "https://www.alibabacloud.com/blog/alibaba-unveils-roadmap-on-full-stack-ai-strategy-from-chips-cloud-infrastructure-models-to-agents_603589", "date": "2026-09-22"},
+        {"label": "Community timing discussion", "url": "https://www.reddit.com/r/LocalLLaMA/comments/1wz1pqn/qwen_4_apparently_coming_out_at_the_end_of_october/", "date": "2026-10-07"}
+      ]
+    },
+    {
+      "name": "Kimi K3.1",
+      "author": "moonshotai",
+      "match": "^kimi[ _-]*k3[.]1(?![.\\d])",
+      "status": "Teaser / reports",
+      "conf": "md",
+      "what": "Launch teaser and reported Kibitz Arena tests. The K3.1 identity and timing are reported; open-weight terms are not verified.",
+      "when": "Before Oct 27 · social claim, unconfirmed",
+      "until": "2026-10-26",
+      "sources": [{"label": "TestingCatalog · teaser and source posts", "url": "https://www.testingcatalog.com/kimi-k3-1-spotted-testing-arena/", "date": "2026-10-23"}]
+    },
+    {
+      "name": "DeepSeek V4.1 Pro",
+      "author": "deepseek-ai",
+      "match": "^deepseek[ _-]*v4[.]1[ _-]*pro(?![.\\d])",
+      "status": "Unverified listing",
+      "conf": "lo",
+      "what": "A public third-party model entry exists. It does not establish a release, specifications, or an open-weight commitment.",
+      "when": "Unknown",
+      "sources": [
+        {"label": "OpenCode model listing", "url": "https://opencode.ai/data/deepseek/deepseek-v4-1-pro", "date": "2026-10-23"},
+        {"label": "ByteForward · listing caveats", "url": "https://bytefwd.com/opencode-kimi-k4-deepseek-v41-pro-model-listings/", "date": "2026-10-01"}
+      ]
+    },
+    {
+      "name": "Kimi K4",
+      "author": "moonshotai",
+      "match": "^kimi[ _-]*k4(?![.\\d])",
+      "status": "Unverified listing",
+      "conf": "lo",
+      "what": "A third-party entry uses this name; model plans, release timing, and weight availability remain unconfirmed.",
+      "when": "Unknown",
+      "sources": [
+        {"label": "OpenCode model listing", "url": "https://opencode.ai/data/moonshot/kimi-k4", "date": "2026-10-23"},
+        {"label": "ByteForward · listing caveats", "url": "https://bytefwd.com/opencode-kimi-k4-deepseek-v41-pro-model-listings/", "date": "2026-10-01"}
+      ]
+    },
+    {
+      "name": "GLM 5.4",
+      "author": "zai-org",
+      "match": "^glm[ _-]*5[.]4(?![.\\d])",
+      "status": "Unverified listing",
+      "conf": "lo",
+      "what": "Named in a public third-party listing. This is a watchlist clue, not confirmation of a model or its weight-release plans.",
+      "when": "Unknown",
+      "sources": [
+        {"label": "OpenCode model listing", "url": "https://opencode.ai/data/zhipuai/glm-5-4", "date": "2026-10-23"},
+        {"label": "ByteForward · listing caveats", "url": "https://bytefwd.com/opencode-kimi-k4-deepseek-v41-pro-model-listings/", "date": "2026-10-01"}
+      ]
+    },
+    {
+      "name": "GLM 5.5 Flash",
+      "author": "zai-org",
+      "match": "^glm[ _-]*5[.]5[ _-]*flash(?![.\\d])",
+      "status": "Unverified listing",
+      "conf": "lo",
+      "what": "A third-party listing was reported alongside GLM 5.4. Neither the launch order nor an open-weight release is established.",
+      "when": "Unknown",
+      "sources": [{"label": "ByteForward · listing report and caveats", "url": "https://bytefwd.com/opencode-kimi-k4-deepseek-v41-pro-model-listings/", "date": "2026-10-01"}]
+    },
+    {
+      "name": "DeepSeek V5",
+      "author": "deepseek-ai",
+      "match": "^deepseek[ _-]*v5(?![.\\d])",
+      "status": "Speculation",
+      "conf": "lo",
+      "what": "A V5/Huawei-training rumor circulated. The source review finds the model identity, hardware claim, and imminent launch unsubstantiated.",
+      "when": "No verified date",
+      "sources": [{"label": "CellCog · rumor versus published evidence", "url": "https://cellcog.ai/blog/deepseek-v5-release-date/", "date": "2026-10-01"}]
+    }
+  ]
+}

@@ -17,11 +17,15 @@ def verify(page):
     assert data['model_count'] >= 15 and data['releases'], 'Empty model data'
     assert page.count('class="digest-card ') == 4
     assert page.count('data-release') == len(data['releases'])
-    assert page.count('data-watch') == len(data['watch']['items'])
+    assert page.count('data-rumor') == len(data['watch']['items'])
+    assert page.index('id="rumored-models"') < page.index('The quick read')
+    for item in data['watch']['items']:
+        assert item['name'] and item['sources']
+        assert all(source['url'].startswith(('http://', 'https://')) for source in item['sources'])
     for model in data['top']:
         assert model['url'].startswith('https://huggingface.co/')
     assert not re.search(r'href=["\']\s*(javascript:|data:)', page, re.I)
-    print(f"Verified {data['updated']}: {data['model_count']} models, 4 digest cards, {len(data['watch']['items'])} launch reports, {len(data['releases'])} new repositories")
+    print(f"Verified {data['updated']}: {data['model_count']} models, 4 digest cards, {len(data['watch']['items'])} rumored/upcoming models, {len(data['releases'])} new repositories")
     return data
 
 

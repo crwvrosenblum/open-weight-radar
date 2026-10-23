@@ -17,14 +17,19 @@ LABS = {
     'Meta Llama': 'meta-llama', 'Google Gemma': 'google', 'NVIDIA Nemotron': 'nvidia',
     'OpenAI gpt-oss': 'openai', 'Reflection': 'reflection',
 }
-FAMILIES = {
-    'Mistral': r'\bmistral\b', 'Qwen / Alibaba': r'\bqwen\b|\balibaba\b',
-    'DeepSeek': r'\bdeepseek\b', 'Moonshot Kimi': r'\bkimi\b|\bmoonshot\b',
-    'MiniMax': r'\bminimax\b', 'Z.ai GLM': r'\bglm[ -]?\d|\bz\.ai\b',
-    'Meta Llama': r'\bllama\b', 'Google Gemma': r'\bgemma\b',
-    'NVIDIA Nemotron': r'\bnemotron\b', 'OpenAI gpt-oss': r'\bgpt[ -]?oss\b',
-    'Reflection': r'\breflection\b',
+MODEL_NAMES = {
+    'mistralai': r'\bmistral[ -]+large[ -]+\d+(?:\.\d+)?',
+    'Qwen': r'\bqwen[ -]*\d+(?:\.\d+)?(?:[ -]+max)?',
+    'deepseek-ai': r'\bdeepseek[ -]*v\d+(?:\.\d+)?(?:[ -]+(?:pro|flash))?',
+    'moonshotai': r'\bkimi[ -]*k\d+(?:\.\d+)?',
+    'MiniMaxAI': r'\bminimax[ -]*m\d+(?:\.\d+)?(?:[ -]+flash)?',
+    'zai-org': r'\bglm[ -]*\d+(?:\.\d+)?(?:[ -]+flash)?',
+    'meta-llama': r'\bllama[ -]*\d+(?:\.\d+)?',
+    'google': r'\bgemma[ -]*\d+(?:\.\d+)?',
+    'nvidia': r'\bnemotron[ -]*\d+(?:\.\d+)?',
+    'openai': r'\bgpt[ -]*oss[ -]*\d+',
 }
+UPCOMING = r'rumou?r|leak|upcoming|in training|expected|spotted|teaser|prepar|preview|coming|planned|unreleased'
 TASKS = {'text-generation', 'image-text-to-text', 'text2text-generation', 'any-to-any'}
 
 
@@ -122,7 +127,7 @@ def collect_models():
 
 
 def collect_news(now):
-    query = '(Mistral OR Qwen OR DeepSeek OR Kimi OR MiniMax OR GLM OR Llama OR Gemma OR Nemotron OR gpt-oss OR Reflection) (model OR weights) (release OR launch OR upcoming OR preview OR leak) when:14d'
+    query = '(Mistral OR Qwen OR DeepSeek OR Kimi OR MiniMax OR GLM OR Llama OR Gemma OR Nemotron OR gpt-oss OR Reflection) (model OR weights) (rumor OR leak OR upcoming OR preview OR training OR teaser OR expected OR release) when:14d'
     url = 'https://news.google.com/rss/search?' + urllib.parse.urlencode({'q': query, 'hl': 'en-US', 'gl': 'US', 'ceid': 'US:en'})
     root = ET.fromstring(http(url))
     items = []
@@ -141,21 +146,66 @@ def collect_news(now):
     return sorted(items, key=lambda item: item['published'], reverse=True)
 
 
-def launch_watch(news, models):
-    items = []
-    for family, pattern in FAMILIES.items():
-        report = next((item for item in news if re.search(pattern, item['title'], re.I)), None)
-        if not report:
+def model_key(name):
+    return re.sub(r'[\s_-]+', '', name.casefold())
+
+
+def rumored_models(news, models, previous, now):
+    curated = json.loads((ROOT / 'rumors.json').read_text())
+    items = {model_key(item['name']): dict(item) for item in curated['items']}
+    # Persist discovered names so a transient news outage cannot erase a rumor.
+    for item in previous.get('items', []):
+        if not item.get('name'):
             continue
-        # Only an exact model name in a headline can connect a report to weights.
-        def words(value):
-            return re.sub(r'[^a-z0-9]+', ' ', value.lower()).strip()
-        title = ' ' + words(report['title']) + ' '
-        matches = [m for m in models if len(words(m['name'])) >= 8 and ' ' + words(m['name']) + ' ' in title]
-        matched = max(matches, key=lambda m: len(m['name']), default=None)
-        items.append(dict(report, family=family, signal='Rumor' if re.search(r'rumou?r|leak|unconfirmed|speculat', report['title'], re.I) else 'Report',
-                          weights={'name': matched['name'], 'url': matched['url']} if matched else None))
-    return sorted(items, key=lambda item: item['published'], reverse=True)[:10]
+        key = model_key(item['name'])
+        if key in items:
+            items[key].update({field: item[field] for field in ('seen', 'latest') if field in item})
+        elif item.get('discovered') and stamp(item.get('seen')) and now - stamp(item['seen']) <= dt.timedelta(days=30):
+            items[key] = dict(item)
+    for report in news:
+        if not re.search(UPCOMING, report['title'], re.I):
+            continue
+        if re.search(r'weights (?:are )?out|now available|rumou?rs? debunked', report['title'], re.I):
+            continue
+        for author, pattern in MODEL_NAMES.items():
+            match = re.search(pattern, report['title'], re.I)
+            if not match:
+                continue
+            name = match[0]
+            key = model_key(name)
+            if key not in items:
+                model_pattern = re.escape(name).replace(r'\ ', r'[ _-]*').replace(r'\-', r'[ _-]*')
+                items[key] = {'name': name, 'author': author, 'match': '^' + model_pattern + r'(?![.\d])',
+                              'status': 'Unverified report', 'conf': 'lo', 'what': report['title'],
+                              'when': 'No verified date', 'discovered': True,
+                              'sources': [{'label': report['source'], 'url': report['url'], 'date': report['published'][:10]}]}
+            # Reports arrive newest first; keep the latest matching source.
+            item = items[key]
+            if report['published'] > item.get('seen', ''):
+                item['seen'] = report['published']
+                item['latest'] = report
+    result = []
+    landed = dict(previous.get('landed', {}))
+    for key, item in items.items():
+        item['sources'] = [source for source in item.get('sources', []) if safe_url(source.get('url'))]
+        if not item['sources'] or item.get('conf') not in ('hi', 'md', 'lo'):
+            continue
+        try:
+            pattern = re.compile(item['match'], re.I)
+        except re.error:
+            continue
+        matches = [model for model in models if model['author'].casefold() == item['author'].casefold() and pattern.search(model['name'])]
+        if matches:
+            landed[key] = matches[0]['url']
+        if key in landed:
+            # Remember released names even after they leave the bounded catalog.
+            continue
+        until = item.get('until')
+        if until and now.date().isoformat() > until:
+            item['when'] = 'Reported window passed · no weights found in tracked sources'
+        item['reviewed'] = curated['reviewed'] if not item.get('discovered') else None
+        result.append(item)
+    return {'updated': now.isoformat(), 'reviewed': curated['reviewed'], 'items': result[:10], 'landed': landed}
 
 
 def render(data):
@@ -173,9 +223,19 @@ def render(data):
         ('Trending now', top[0]['name'], f"{number(top[0]['score'])} trending score · Hugging Face"),
         ('New repositories · 30d', len(releases), 'Across tracked labs + trending results'),
         ('Most downloaded · trending 15', max(top, key=lambda m: m['downloads'])['name'], 'Hugging Face · rolling 30 days'),
-        ('Launch signals', len(watch), 'Sourced reports · last 14 days'),
+        ('Rumored & upcoming', len(watch), 'Named models · source links below'),
     ])
-    watch_rows = ''.join(f'<tr data-watch><td class="model">{esc(item["family"])}</td><td><span class="pill {"lo" if item["signal"] == "Rumor" else "md"}">{esc(item["signal"])}</span></td><td>{link(item["url"], item["title"])}<small>{esc(item["source"])}</small></td><td class="nowrap">{esc(item["published"][:10])}</td><td>{link(item["weights"]["url"], item["weights"]["name"]) if item["weights"] else "Not verified"}</td></tr>' for item in watch)
+    rumor_cards = []
+    for item in watch:
+        sources = ''.join(f'<li>{link(source["url"], source["label"])} <span>· {esc(source["date"])}</span></li>' for source in item['sources'])
+        latest = item.get('latest')
+        latest_link = f'<p class="rumor-latest">Latest coverage: {link(latest["url"], latest["source"])} · {esc(latest["published"][:10])}</p>' if latest else ''
+        rumor_cards.append(
+            f'<article class="rumor-card" data-rumor><div class="rumor-top"><h3>{esc(item["name"])}</h3>'
+            f'<span class="pill {esc(item["conf"])}">{esc(item["status"])}</span></div>'
+            f'<p>{esc(item["what"])}</p><p class="rumor-when">{esc(item["when"])}</p>'
+            f'<ul class="rumor-sources" aria-label="Sources for {esc(item["name"])}">{sources}</ul>{latest_link}</article>'
+        )
     movers = ''.join(f'<tr><td>{index}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td class="numeric">{number(model["score"])}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td><td>{"↑ " + str(model["movement"]) if model["movement"] is not None and model["movement"] > 0 else "↓ " + str(-model["movement"]) if model["movement"] is not None and model["movement"] < 0 else "—" if model["movement"] == 0 or not data["previous"] else "New"}</td></tr>' for index, model in enumerate(top, 1))
     release_rows = ''.join(f'<tr data-release><td class="nowrap">{esc(model["created"][:10])}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td>{esc(model["task"])}</td><td>{esc(model["license"])}{" · gated" if model["gated"] else ""}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td></tr>' for model in releases)
     coverage = ', '.join(LABS)
@@ -183,7 +243,8 @@ def render(data):
     values = {
         'UPDATED': esc(data['updated'].replace('T', ' ').replace('+00:00', ' UTC')),
         'COUNT': str(data['model_count']), 'KPIS': kpis, 'DIGEST': digest,
-        'WATCH_ROWS': watch_rows or '<tr><td colspan="5">No recent matching reports. Check the lab model pages below.</td></tr>',
+        'RUMOR_CARDS': ''.join(rumor_cards) or '<p class="coverage">No sourced, unreleased model candidates in this snapshot.</p>',
+        'REVIEWED': esc(data['watch']['reviewed']),
         'WATCH_TIME': esc(data['watch'].get('updated') or 'unavailable'), 'WATCH_WARNING': warning,
         'TOP_ROWS': movers, 'RELEASE_ROWS': release_rows or '<tr><td colspan="6">No recent repositories in this snapshot.</td></tr>',
         'RELEASE_COUNT': str(len(releases)), 'COVERAGE': esc(coverage),
@@ -213,18 +274,19 @@ def main():
         news = collect_news(now)
         if not news:
             raise ValueError('No recent news items')
-        watch = {'updated': now.isoformat(), 'items': launch_watch(news, models)}
+        watch = rumored_models(news, models, previous.get('watch', {}), now)
     except Exception as error:
         print(f'Warning: news refresh failed ({type(error).__name__}); retaining previous reports')
-        watch = dict(previous.get('watch', {'updated': None, 'items': []}))
-        watch['warning'] = 'News refresh unavailable. Reports below retain their original research and publication dates.'
+        watch = rumored_models([], models, previous.get('watch', {}), now)
+        watch['updated'] = previous.get('watch', {}).get('updated')
+        watch['warning'] = 'News refresh unavailable. Showing dated source evidence and previous reports; weight availability was checked in this build.'
     data = {'updated': now.isoformat(), 'model_count': len(models), 'top': ranked[:15], 'releases': releases,
             'watch': watch, 'previous': previous.get('updated')}
     site = ROOT / 'site'
     site.mkdir(exist_ok=True)
     (site / 'index.html').write_text(render(data))
     state_file.write_text(json.dumps({'updated': now.isoformat(), 'ranks': {model['id']: rank for rank, model in enumerate(ranked, 1)}, 'watch': watch}, indent=2, ensure_ascii=False) + '\n')
-    print(f"Built {data['updated']}: {len(models)} repositories, {len(releases)} recent, {len(watch['items'])} launch signals; no paid APIs")
+    print(f"Built {data['updated']}: {len(models)} repositories, {len(releases)} recent, {len(watch['items'])} rumored/upcoming models; no paid APIs")
 
 
 if __name__ == '__main__':

@@ -43,6 +43,12 @@ def fake_http(url):
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)
     shutil.copy(build.ROOT / 'template.html', root / 'template.html')
+    sources = [{'label': 'Fixture evidence', 'url': 'https://example.com/rumor', 'date': now.date().isoformat()}]
+    seeds = [
+        {'name': 'Qwen Test-Model-1', 'author': 'Qwen', 'match': '^Test-Model-1$', 'status': 'Speculation', 'conf': 'lo', 'what': 'A sourced rumor', 'when': 'Unknown', 'sources': sources},
+        {'name': 'Qwen 4', 'author': 'Qwen', 'match': r'^Qwen[ _-]*4(?![.\d])', 'status': 'In training', 'conf': 'md', 'what': 'Training reported', 'when': 'Unknown', 'sources': sources},
+    ]
+    (root / 'rumors.json').write_text(json.dumps({'reviewed': now.date().isoformat(), 'items': seeds}))
     with patch.object(build, 'ROOT', root), patch.object(build, 'http', fake_http):
         build.main()
         page = (root / 'site/index.html').read_text()
@@ -51,7 +57,29 @@ with tempfile.TemporaryDirectory() as directory:
         data = json.loads(payload)
         assert data['model_count'] == 20 and len(data['top']) == 15
         assert len(data['releases']) == 20 and len(data['watch']['items']) == 1
-        assert data['watch']['items'][0]['weights']['name'] == 'Test-Model-1'
+        assert data['watch']['items'][0]['name'] == 'Qwen 4'
+        assert page.index('id="rumored-models"') < page.index('The quick read')
+        assert 'Model family' not in page and 'https://example.com/rumor' in page
+        assert 'qwentestmodel1' in data['watch']['landed']
+        # Version 4.5 and community lookalikes must not count as official Qwen 4.
+        lookalikes = [dict(data['top'][0], author='Qwen', name='Qwen4.5-27B'),
+                      dict(data['top'][0], author='Qwen', name='Qwen40-27B'),
+                      dict(data['top'][0], author='Community', name='Qwen4-27B')]
+        assert any(i['name'] == 'Qwen 4' for i in build.rumored_models([], lookalikes, {}, now)['items'])
+        released = [dict(data['top'][0], author='Qwen', name='Qwen4-27B')]
+        landed = build.rumored_models([], released, {}, now)
+        assert not any(i['name'] == 'Qwen 4' for i in landed['items'])
+        assert not any(i['name'] == 'Qwen 4' for i in build.rumored_models([], [], landed, now)['items'])
+        # Unreviewed names can be discovered from explicitly future-looking news.
+        report = {'title': 'Qwen 6 spotted in upcoming model leak', 'source': 'Example News',
+                  'url': 'https://example.com/new-model', 'published': now.isoformat()}
+        discovered = build.rumored_models([report], [], {}, now)
+        candidate = next(i for i in discovered['items'] if i['name'] == 'Qwen 6')
+        assert candidate['conf'] == 'lo' and candidate['sources'][0]['url'] == report['url']
+        assert any(i['name'] == 'Qwen 6' for i in build.rumored_models([], [], discovered, now)['items'])
+        coverage = build.rumored_models([dict(report, title='Qwen 4 release rumored soon')], [], {}, now)
+        retained = build.rumored_models([], [], coverage, now)
+        assert next(i for i in retained['items'] if i['name'] == 'Qwen 4')['latest']['url'] == report['url']
         assert '<script>alert(1)</script>' not in page
         assert '&lt;img src=x onerror=alert(1)&gt;' in page
         assert not build.safe_url('javascript:alert(1)')
