@@ -225,16 +225,18 @@ def render(data):
         ('Most downloaded · trending 15', max(top, key=lambda m: m['downloads'])['name'], 'Hugging Face · rolling 30 days'),
         ('Rumored & upcoming', len(watch), 'Named models · source links below'),
     ])
-    rumor_cards = []
+    rumor_rows = []
     for item in watch:
         sources = ''.join(f'<li>{link(source["url"], source["label"])} <span>· {esc(source["date"])}</span></li>' for source in item['sources'])
         latest = item.get('latest')
         latest_link = f'<p class="rumor-latest">Latest coverage: {link(latest["url"], latest["source"])} · {esc(latest["published"][:10])}</p>' if latest else ''
-        rumor_cards.append(
-            f'<article class="rumor-card" data-rumor><div class="rumor-top"><h3>{esc(item["name"])}</h3>'
-            f'<span class="pill {esc(item["conf"])}">{esc(item["status"])}</span></div>'
-            f'<p>{esc(item["what"])}</p><p class="rumor-when">{esc(item["when"])}</p>'
-            f'<ul class="rumor-sources" aria-label="Sources for {esc(item["name"])}">{sources}</ul>{latest_link}</article>'
+        source_links = ' '.join(link(source['url'], urllib.parse.urlsplit(source['url']).netloc.removeprefix('www.')) for source in item['sources'])
+        rumor_rows.append(
+            f'<li class="rumor-row" data-rumor><details class="rumor-detail"><summary>'
+            f'<strong>{esc(item["name"])}</strong><span class="pill {esc(item["conf"])}">{esc(item["status"])}</span>'
+            f'</summary><div class="rumor-expanded"><p>{esc(item["what"])}</p><p class="rumor-when">{esc(item["when"])}</p>'
+            f'<ul class="rumor-evidence">{sources}</ul>{latest_link}</div></details>'
+            f'<div class="rumor-links" aria-label="Sources for {esc(item["name"])}">{source_links}</div></li>'
         )
     movers = ''.join(f'<tr><td>{index}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td class="numeric">{number(model["score"])}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td><td>{"↑ " + str(model["movement"]) if model["movement"] is not None and model["movement"] > 0 else "↓ " + str(-model["movement"]) if model["movement"] is not None and model["movement"] < 0 else "—" if model["movement"] == 0 or not data["previous"] else "New"}</td></tr>' for index, model in enumerate(top, 1))
     release_rows = ''.join(f'<tr data-release><td class="nowrap">{esc(model["created"][:10])}</td><td class="model">{link(model["url"], model["name"])}<small>{esc(model["author"])}</small></td><td>{esc(model["task"])}</td><td>{esc(model["license"])}{" · gated" if model["gated"] else ""}</td><td class="numeric">{number(model["downloads"])}</td><td class="numeric">{number(model["likes"])}</td></tr>' for model in releases)
@@ -243,7 +245,7 @@ def render(data):
     values = {
         'UPDATED': esc(data['updated'].replace('T', ' ').replace('+00:00', ' UTC')),
         'COUNT': str(data['model_count']), 'KPIS': kpis, 'DIGEST': digest,
-        'RUMOR_CARDS': ''.join(rumor_cards) or '<p class="coverage">No sourced, unreleased model candidates in this snapshot.</p>',
+        'RUMOR_ROWS': ''.join(rumor_rows) or '<li class="coverage">No sourced, unreleased model candidates in this snapshot.</li>',
         'REVIEWED': esc(data['watch']['reviewed']),
         'WATCH_TIME': esc(data['watch'].get('updated') or 'unavailable'), 'WATCH_WARNING': warning,
         'TOP_ROWS': movers, 'RELEASE_ROWS': release_rows or '<tr><td colspan="6">No recent repositories in this snapshot.</td></tr>',
